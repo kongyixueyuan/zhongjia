@@ -190,6 +190,7 @@ func BlockchainObject() *Blockchain {
 }
 
 // 如果一个地址对应的TXOutput未花费，那么这个Transaction就应该添加到数组中返回
+// 查找一个地址对应的所有TXOutput未花费
 func (blockchain *Blockchain) UnUTXOs(address string, txs []*Transaction) []*UTXO {
 
 	var unUTXOs []*UTXO
@@ -381,49 +382,16 @@ func (blockchain *Blockchain) MineNewBlock(from []string, to []string, amount []
 	fmt.Println(amount)
 
 	var txs []*Transaction
-
+	//1. 通过相关算法建立Transaction数组
+	//多笔转账分别生成transaction。
 	for index, address := range from {
 		value, _ := strconv.Atoi(amount[index])
 		tx := NewSimpleTransaction(address, to[index], value, blockchain, txs)
 		txs = append(txs, tx)
 	}
 
-	//1. 通过相关算法建立Transaction数组
-	var block *Block
-
-	blockchain.DB.View(func(tx *bolt.Tx) error {
-
-		b := tx.Bucket([]byte(blockTableName))
-		if b != nil {
-			hash := b.Get([]byte("l"))
-
-			blockBytes := b.Get(hash)
-
-			block = DeserializeBlock(blockBytes)
-
-		}
-
-		return nil
-	})
-
-	//2. 建立新的区块
-	block = NewBlock(txs, block.Height+1, block.Hash)
-
-	//将新区块存储到数据库
-	blockchain.DB.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(blockTableName))
-		if b != nil {
-
-			b.Put(block.Hash, block.Serialize())
-
-			b.Put([]byte("l"), block.Hash)
-
-			blockchain.Tip = block.Hash
-
-		}
-		return nil
-	})
-
+	//2.生成新的区块
+	blockchain.AddBlockToBlockChain(txs)
 }
 
 // 查询余额

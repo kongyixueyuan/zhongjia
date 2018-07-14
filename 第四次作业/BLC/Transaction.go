@@ -62,11 +62,12 @@ func (tx *Transaction) HashTransaction()  {
 
 //2. 转账时产生的Transaction
 func NewSimpleTransaction(from string,to string,amount int,blockchain *Blockchain,txs []*Transaction) *Transaction {
-	// 通过一个函数，返回
-	money,spendableUTXODic := blockchain.FindSpendableUTXOS(from,amount,txs)
 
 	var txIntputs []*TXInput
 	var txOutputs []*TXOutput
+
+	// 通过一个函数，返回
+	money,spendableUTXODic := blockchain.FindSpendableUTXOS(from,amount,txs)
 
 	for txHash,indexArray := range spendableUTXODic  {
 
